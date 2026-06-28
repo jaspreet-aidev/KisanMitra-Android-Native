@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="#000000">
+
+    <ImageView
+        android:id="@+id/leafImageView"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:background="#333333"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/scanButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SCAN LEAF"
+        android:textSize="20sp"
+        android:padding="16dp"
+        android:backgroundTint="#4CAF50"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:id="@+id/resultTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Diagnosis will appear here."
+        android:textSize="24sp"
+        android:textColor="#FFFFFF"
+        android:textAlignment="center"/>
+
+</LinearLayout>
