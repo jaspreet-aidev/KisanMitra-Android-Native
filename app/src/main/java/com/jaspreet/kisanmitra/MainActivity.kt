@@ -1,5 +1,6 @@
-package com.jaspreet.kisanmitra
+package com.jaspreet.kisanmitra2
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
@@ -13,6 +14,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scanButton: Button
     private lateinit var resultTextView: TextView
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // 2. Tell the app to use our exact XML layout
