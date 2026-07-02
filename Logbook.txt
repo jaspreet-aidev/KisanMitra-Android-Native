@@ -1,0 +1,48 @@
+📄 FILE: Logbook.txt (Kisan Mitra / Rice Doctor Edge-AI Build)
+
+Author: Jaspreet (Lead Systems Architect)
+Environment: Linux Mint XFCE (Intel i5 8th Gen, 6GB RAM), Moto G85 instead of emulater.
+Objective: Compile and deploy an offline-first TensorFlow Lite crop-disease model for 3GB RAM constrained Android devices.
+🛠️ BUG 001: Execution Path Missing (Linux Setup)
+
+    The Error: Downloaded Android Studio on Linux Mint but could not find the application shortcut or launch it from the OS menu.
+
+    The Diagnosis: Unlike Windows .exe installers, Linux provides a compressed .tar.gz tarball. It does not automatically configure system paths or GUI shortcuts.
+
+    The Fix: Bypassed the GUI. Extracted the files manually, navigated to the bin/ directory, opened the root terminal, and executed ./studio.sh. Created a manual desktop entry to lock the IDE into the system path permanently.
+
+🛠️ BUG 002: The "Grey Play Button" (Target Device Not Found)
+
+    The Error: Android Studio successfully launched, but the "Run" (Play) button remained greyed out. The project would not compile to the Moto G85.
+
+    The Diagnosis: The Linux kernel required explicit udev rules to recognize Android hardware, and the phone lacked authorized debugging parameters.
+
+    The Fix: 1. Unlocked Android Developer Options and enabled USB Debugging.
+    2. Ran lsusb in the Linux terminal to verify the USB-C cable was a data-transfer cable, not just a charging cable.
+    3. Authorized the specific RSA key prompt from the Linux machine to bridge the physical device to the IDE.
+
+🛠️ BUG 003: The System Freeze / RAM Swap Trap
+
+    The Error: Clicking "Deploy" in Android Studio caused the entire Linux Command Center to freeze. htop telemetry showed RAM maxing out and spilling over 1.1GB into the slower SSD "Swap" partition, causing massive lag and execution paralysis.
+
+    The Diagnosis: Android Studio attempted to initialize the Android Virtual Device (AVD / Emulator). The Emulator requires 3GB+ of overhead RAM, which instantly bottlenecked the 12GB system.
+
+    The Fix (The "No Emulator" Rule): Permanently disabled AVD virtual machines. Transitioned to a 100% "Bare-Metal Deployment" architecture. Compiled all APK builds directly onto the physical Snapdragon processor of the connected Moto G85. Initiated the "3-Tab Browser Rule" to minimize external RAM consumption during IDE compilation.
+
+🛠️ BUG 004: Display Manager Crash (GUI Blackout)
+
+    The Error: While coding, the Linux Mint display manager crashed, breaking workspace shortcuts (Ctrl + Alt + Arrows) and locking the GUI on a black screen.
+
+    The Diagnosis: A memory leak/spike from Android Studio (java process) overwhelmed the system's graphical limits while fighting for resources with the NVIDIA 2GB dedicated GPU.
+
+    The Fix: Bypassed the dead GUI by dropping into the raw TTY terminal (Ctrl + Alt + F2). Ran the top command, located the PID of the rogue Android Studio process consuming the memory, and executed the kill command to gracefully restart the display manager without hard-rebooting the system.
+
+🛠️ BUG 005: Out-Of-Memory (OOM) Fatal Crash on Mobile
+
+    The Error: The compiled application successfully ran on a high-end device, but instantly crashed (closed forcefully) when tested on legacy 3GB/4GB RAM phones in the field.
+
+    The Diagnosis: Modern phone cameras generate massive image buffers (12MB–50MB). Feeding a raw, full-resolution bitmap directly into the .tflite neural network instantly triggered the Android OS Low Memory Killer (LMK).
+
+    The Fix: 1. Bitmap Resizing Pipeline: Wrote native Kotlin bridge logic to intercept the camera intent and strictly resize the captured image to 224x224 pixels before handing it to the AI interpreter.
+    2. Aggressive Garbage Collection: Engineered the code to instantly clear the high-res camera buffer from RAM the exact millisecond the Hindi diagnostic text is rendered to the UI.
+    3. Bare-Metal UI: Stripped out heavy XML animations and sliding menus, ensuring 100% of the device's processing power was reserved for the matrix math of the neural network.
