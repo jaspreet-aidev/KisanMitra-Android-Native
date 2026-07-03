@@ -12,6 +12,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.app.ActivityCompat
+import android.content.pm.PackageManager
+import android.widget.Toast
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,7 +28,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnGallery: Button
 
     // The Memory Squeeze Target (MobileNetV2 requires 224x224)
-    private val imageSize = 224
+    private val imageSize = 224// 1. Define the launcher at the class level
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap: Bitmap? ->
+        bitmap?.let {
+            processAndDisplayImage(it)
+        }
+    }
+
+    // 2. Define the function to call the launcher
+    private fun openCamera() {
+        cameraLauncher.launch(null)
+    }
+
+
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,11 +55,40 @@ class MainActivity : AppCompatActivity() {
         btnGallery = findViewById(R.id.btnGallery)
 
         // 3. Camera Trigger (Fast Bridge)
-        val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
-            if (bitmap != null) {
-                processAndDisplayImage(bitmap)
+        // Inside your onCreate method, where you set up your button:
+        val cameraButton = findViewById<Button>(R.id.btnCamera)
+
+        btnCamera.setOnClickListener {
+            // 1. Check if we have permission
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                openCamera()
+            } else {
+                // 2. Request permission if not granted
+                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 100)
             }
         }
+
+
+        // 1. Find the button using the correct ID from activity_main.xml
+// Assuming your button has android:id="@+id/btnCamera"
+        val btnCamera = findViewById<Button>(R.id.btnCamera)
+
+        btnCamera.setOnClickListener {
+            try {
+                // Run your camera logic here
+                if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    openCamera()
+                } else {
+                    ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 100)
+                }
+            } catch (e: Exception) {
+                // If the system tries to kill the app, this catch block keeps it alive
+                e.printStackTrace()
+                Toast.makeText(this, "Camera error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+
+
 
         // 4. Gallery Trigger
         val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -67,6 +113,18 @@ class MainActivity : AppCompatActivity() {
             resultTextView.text = "System Ready. AI Scan will happen here in Phase 4."
         }
     }
+    // 3. Add this callback to handle the user's response to the popup
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 100) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openCamera()
+            } else {
+                Toast.makeText(this, "Permission denied. Camera cannot be opened.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
 
     // --- CORE ARCHITECTURE: MEMORY SQUEEZE ---
 
