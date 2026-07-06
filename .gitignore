@@ -12,4 +12,8 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+*.apk
+*.jks
+.kotlin/
+capture.jpg
+git add .

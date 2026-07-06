@@ -1,4 +1,4 @@
-package com.jaspreet.kisanmitra2
+package com.jaspreet.kisanmitra
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -12,13 +12,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import org.tensorflow.lite.Interpreter // You need to add 'implementation org.tensorflow:tensorflow-lite' to build.gradle
+import org.tensorflow.lite.Interpreter
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.io.FileInputStream
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
-import android.graphics.Bitmap
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,7 +28,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedBitmap: Bitmap? = null
 
     private val imageSize = 224
-    private var interpreter: Interpreter? = null // TFLite Interpreter
+    private var interpreter: Interpreter? = null
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +41,12 @@ class MainActivity : AppCompatActivity() {
         btnGallery = findViewById(R.id.btnGallery)
 
         // Load TFLite Model here
-        interpreter = Interpreter(loadModelFile())
+        try {
+            interpreter = Interpreter(loadModelFile())
+        } catch (e: Exception) {
+            e.printStackTrace()
+            resultTextView.text = "Error loading model: ${e.message}"
+        }
 
         val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
@@ -64,7 +68,16 @@ class MainActivity : AppCompatActivity() {
                 resultTextView.text = "Please select an image first."
             }
         }
+    }
 
+    private fun loadModelFile(): MappedByteBuffer {
+        val fileDescriptor = assets.openFd("model.tflite")
+        val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
+        val fileChannel = inputStream.channel
+        val startOffset = fileDescriptor.startOffset
+        val declaredLength = fileDescriptor.declaredLength
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+    }
 
     private fun processAndDisplayImage(originalBitmap: Bitmap) {
         val resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, imageSize, imageSize, true)
@@ -95,10 +108,10 @@ class MainActivity : AppCompatActivity() {
         interpreter?.run(byteBuffer, output)
 
         // 5. Display result
-        resultTextView.text = "Prediction: ${output[0].indices.maxByOrNull { output[0][it] }}"
+        val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: -1
+        resultTextView.text = "Prediction: $maxIndex"
     }
 
-    // Helper functions (uriToBitmap same as before)
     @Suppress("DEPRECATION")
     private fun uriToBitmap(uri: Uri): Bitmap? {
         return try {
