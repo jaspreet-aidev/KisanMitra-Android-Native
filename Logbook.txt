@@ -73,3 +73,28 @@ Bug ID: #INF-STABLE-001
     Fix: Optimized memory management/pipeline buffer.
 
     Result: Inference running without crash on 3GB+ device environments.
+
+
+================================================================================
+LOG NODE: COMP-MAP-002 | DATE: 2026-07-07 | AUTHOR: Jaspreet Singh
+================================================================================
+
+[MILESTONE] UI String Index Mappings & Metric Calibration Deployed
+
+1. PRIOR RUNTIME STATE:
+   - Inference loop outputting raw argmax indices (e.g., "Prediction: 9").
+   - Softmax output heavily skewed toward Rice Tungro Virus with weak baseline 
+     confidence spreads (40% - 50%) due to dataset class imbalance.
+
+2. IMPLEMENTATION DEPLOYED:
+   - Kotlin string array bridge integrated to parse raw argmax index values into 
+     explicit plant disease diagnostic labels.
+   - String formatter injected to cleanly display user-facing probability spreads 
+     (e.g., "Rice Tungro Virus: 45%") in the layout view elements.
+   - verified index conversion overhead adds <1ms, maintaining zero-latency targets.
+
+3. RE-SPRINT TARGETS:
+   - Run dataset class distribution audit in next Google Colab cycle.
+   - Inject sklearn compute_class_weight balanced dictionaries directly into 
+     model.fit() to clear remaining prediction bias.
+================================================================================
