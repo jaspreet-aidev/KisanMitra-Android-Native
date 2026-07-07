@@ -25,10 +25,25 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scanButton: Button
     private lateinit var resultTextView: TextView
     private lateinit var btnGallery: Button
+    private lateinit var btnCamera: Button
     private var selectedBitmap: Bitmap? = null
 
     private val imageSize = 224
     private var interpreter: Interpreter? = null
+
+    // Rice Disease Labels (Order must match your TFLite model training)
+    private val labels = arrayOf(
+        "Bacterial Leaf Blight",
+        "Brown Spot",
+        "Healthy Rice Leaf",
+        "Rice Hispa",
+        "Leaf Blast",
+        "Leaf Scald",
+        "Leaf Smut",
+        "Neck Blast",
+        "Sheath Blight",
+        "Tungro Virus"
+    )
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,8 +54,9 @@ class MainActivity : AppCompatActivity() {
         scanButton = findViewById(R.id.scanButton)
         resultTextView = findViewById(R.id.resultTextView)
         btnGallery = findViewById(R.id.btnGallery)
+        btnCamera = findViewById(R.id.btnCamera)
 
-        // Load TFLite Model here
+        // Load TFLite Model
         try {
             interpreter = Interpreter(loadModelFile())
         } catch (e: Exception) {
@@ -57,15 +73,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap: Bitmap? ->
+            bitmap?.let {
+                processAndDisplayImage(it)
+            }
+        }
+
         btnGallery.setOnClickListener {
             galleryLauncher.launch("image/*")
+        }
+
+        btnCamera.setOnClickListener {
+            cameraLauncher.launch(null)
         }
 
         scanButton.setOnClickListener {
             selectedBitmap?.let {
                 runInference(it)
             } ?: run {
-                resultTextView.text = "Please select an image first."
+                resultTextView.text = "Please select or take an image first."
             }
         }
     }
@@ -81,35 +107,46 @@ class MainActivity : AppCompatActivity() {
 
     private fun processAndDisplayImage(originalBitmap: Bitmap) {
         val resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, imageSize, imageSize, true)
-        selectedBitmap = resizedBitmap // Keep reference for AI
+        selectedBitmap = resizedBitmap 
         leafImageView.setImageBitmap(resizedBitmap)
         resultTextView.text = "Image ready for scan."
     }
 
     private fun runInference(bitmap: Bitmap) {
-        // 1. Prepare ByteBuffer (224x224x3 channels * 4 bytes for Float)
+        // 1. Prepare ByteBuffer
         val byteBuffer = ByteBuffer.allocateDirect(4 * imageSize * imageSize * 3)
         byteBuffer.order(ByteOrder.nativeOrder())
 
         val intValues = IntArray(imageSize * imageSize)
         bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
 
-        // 2. Pre-process: Normalize pixels to [0, 1] range if model expects it
         for (pixelValue in intValues) {
             byteBuffer.putFloat(((pixelValue shr 16) and 0xFF) / 255.0f)
             byteBuffer.putFloat(((pixelValue shr 8) and 0xFF) / 255.0f)
             byteBuffer.putFloat((pixelValue and 0xFF) / 255.0f)
         }
 
-        // 3. Define output buffer
-        val output = Array(1) { FloatArray(10) } // Change '10' to your number of classes
+        // 2. Define output buffer
+        val output = Array(1) { FloatArray(labels.size) } 
 
-        // 4. Run Model
+        // 3. Run Model
         interpreter?.run(byteBuffer, output)
 
-        // 5. Display result
+        // Log scores for debugging
+        for (i in labels.indices) {
+            android.util.Log.d("AI_MODEL", "${labels[i]}: ${output[0][i]}")
+        }
+
+        // 4. Display result
         val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: -1
-        resultTextView.text = "Prediction: $maxIndex"
+        val confidence = if (maxIndex != -1) output[0][maxIndex] else 0f
+        
+        if (maxIndex != -1 && maxIndex < labels.size) {
+            val diagnosis = labels[maxIndex]
+            resultTextView.text = "Result: $diagnosis\nConfidence: ${String.format("%.2f", confidence * 100)}%"
+        } else {
+            resultTextView.text = "Detection failed."
+        }
     }
 
     @Suppress("DEPRECATION")
