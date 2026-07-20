@@ -3,62 +3,67 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp"
-    android:background="#000000">
+    android:background="#FFFFFF"
+    android:padding="20dp"
+    android:weightSum="10">
 
     <ImageView
-        android:id="@+id/leafImageView"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:background="#333333"
-        android:scaleType="centerCrop"
-        android:layout_marginBottom="16dp" />
-
-    <LinearLayout
+        android:id="@+id/imageView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="24dp">
-
-        <Button
-            android:id="@+id/btnCamera"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OPEN CAMERA"
-            android:layout_marginEnd="8dp"
-            android:backgroundTint="#2196F3"
-            android:textColor="#FFFFFF"/>
-
-        <Button
-            android:id="@+id/btnGallery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OPEN GALLERY"
-            android:layout_marginStart="8dp"
-            android:backgroundTint="#FF9800"
-            android:textColor="#FFFFFF"/>
-    </LinearLayout>
+        android:layout_height="0dp"
+        android:layout_weight="5"
+        android:scaleType="centerCrop"
+        android:background="#F5F5F5"
+        android:contentDescription="Crop leaf image preview"
+        android:layout_marginBottom="15dp" />
 
     <Button
-        android:id="@+id/scanButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="SCAN LEAF"
-        android:textSize="20sp"
-        android:padding="16dp"
-        android:backgroundTint="#4CAF50"
+        android:id="@+id/btnCamera"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.2"
+        android:text="📸 TAKE PHOTO (CAMERA)"
+        android:textSize="18sp"
+        android:textStyle="bold"
         android:textColor="#FFFFFF"
-        android:layout_marginBottom="24dp"/>
+        android:backgroundTint="#2E7D32"
+        android:layout_marginBottom="10dp" />
+
+    <Button
+        android:id="@+id/btnGallery"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.2"
+        android:text="📁 UPLOAD FROM GALLERY"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#1976D2"
+        android:layout_marginBottom="10dp" />
+
+    <Button
+        android:id="@+id/btnScan"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.2"
+        android:text="🔍 SCAN LEAF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#E65100"
+        android:layout_marginBottom="15dp" />
 
     <TextView
-        android:id="@+id/resultTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Diagnosis will appear here."
-        android:textSize="20sp"
-        android:textColor="#FFFFFF"
-        android:textAlignment="center"/>
+        android:id="@+id/tvResult"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.4"
+        android:text="Diagnosis Result: Waiting..."
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#212121"
+        android:gravity="center"
+        android:background="#F5F5F5"
+        android:padding="10dp" />
 
 </LinearLayout>

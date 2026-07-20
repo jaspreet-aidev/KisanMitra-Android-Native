@@ -50,9 +50,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        leafImageView = findViewById(R.id.leafImageView)
-        scanButton = findViewById(R.id.scanButton)
-        resultTextView = findViewById(R.id.resultTextView)
+        leafImageView = findViewById(R.id.imageView)
+        scanButton = findViewById(R.id.btnScan)
+        resultTextView = findViewById(R.id.tvResult)
         btnGallery = findViewById(R.id.btnGallery)
         btnCamera = findViewById(R.id.btnCamera)
 
@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadModelFile(): MappedByteBuffer {
-        val fileDescriptor = assets.openFd("model.tflite")
+        val fileDescriptor = assets.openFd("New_81_model.tflite")
         val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
         val fileChannel = inputStream.channel
         val startOffset = fileDescriptor.startOffset
