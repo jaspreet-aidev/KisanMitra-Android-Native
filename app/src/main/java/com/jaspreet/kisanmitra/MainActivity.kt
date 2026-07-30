@@ -113,39 +113,62 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun runInference(bitmap: Bitmap) {
-        // 1. Prepare ByteBuffer
-        val byteBuffer = ByteBuffer.allocateDirect(4 * imageSize * imageSize * 3)
-        byteBuffer.order(ByteOrder.nativeOrder())
+        try {
+            val interpreter = interpreter ?: throw Exception("Interpreter not initialized")
 
-        val intValues = IntArray(imageSize * imageSize)
-        bitmap.getPixels(intValues, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+            // 1. Inspect Model Shapes
+            val inputShape = interpreter.getInputTensor(0).shape() // [1, 224, 224, 3]
+            val outputShape = interpreter.getOutputTensor(0).shape() // [1, 10]
+            val modelImageSize = inputShape[1]
+            val numClasses = outputShape[1]
 
-        for (pixelValue in intValues) {
-            byteBuffer.putFloat(((pixelValue shr 16) and 0xFF) / 255.0f)
-            byteBuffer.putFloat(((pixelValue shr 8) and 0xFF) / 255.0f)
-            byteBuffer.putFloat((pixelValue and 0xFF) / 255.0f)
-        }
+            android.util.Log.d("AI_MODEL", "Input shape: ${inputShape.contentToString()}")
+            android.util.Log.d("AI_MODEL", "Output shape: ${outputShape.contentToString()}")
 
-        // 2. Define output buffer
-        val output = Array(1) { FloatArray(labels.size) } 
+            // 2. Prepare ByteBuffer
+            val byteBuffer = ByteBuffer.allocateDirect(4 * modelImageSize * modelImageSize * 3)
+            byteBuffer.order(ByteOrder.nativeOrder())
 
-        // 3. Run Model
-        interpreter?.run(byteBuffer, output)
+            val resizedBitmap = if (bitmap.width != modelImageSize || bitmap.height != modelImageSize) {
+                Bitmap.createScaledBitmap(bitmap, modelImageSize, modelImageSize, true)
+            } else {
+                bitmap
+            }
 
-        // Log scores for debugging
-        for (i in labels.indices) {
-            android.util.Log.d("AI_MODEL", "${labels[i]}: ${output[0][i]}")
-        }
+            val intValues = IntArray(modelImageSize * modelImageSize)
+            resizedBitmap.getPixels(intValues, 0, resizedBitmap.width, 0, 0, resizedBitmap.width, resizedBitmap.height)
 
-        // 4. Display result
-        val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: -1
-        val confidence = if (maxIndex != -1) output[0][maxIndex] else 0f
-        
-        if (maxIndex != -1 && maxIndex < labels.size) {
-            val diagnosis = labels[maxIndex]
-            resultTextView.text = "Result: $diagnosis\nConfidence: ${String.format("%.2f", confidence * 100)}%"
-        } else {
-            resultTextView.text = "Detection failed."
+            for (pixelValue in intValues) {
+                byteBuffer.putFloat(((pixelValue shr 16) and 0xFF) / 255.0f)
+                byteBuffer.putFloat(((pixelValue shr 8) and 0xFF) / 255.0f)
+                byteBuffer.putFloat((pixelValue and 0xFF) / 255.0f)
+            }
+
+            // 3. Define output buffer dynamically
+            val output = Array(1) { FloatArray(numClasses) }
+
+            // 4. Run Model
+            interpreter.run(byteBuffer, output)
+
+            // 5. Display result
+            val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: -1
+            val confidence = if (maxIndex != -1) output[0][maxIndex] else 0f
+
+            if (maxIndex != -1) {
+                if (maxIndex < labels.size) {
+                    val diagnosis = labels[maxIndex]
+                    resultTextView.text = "Result: $diagnosis\nConfidence: ${String.format("%.2f", confidence * 100)}%"
+                } else {
+                    resultTextView.text = "Result Index: $maxIndex\nConfidence: ${String.format("%.2f", confidence * 100)}%\n(Note: Label missing for index $maxIndex)"
+                }
+            } else {
+                resultTextView.text = "Detection failed: No valid prediction."
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            android.util.Log.e("AI_MODEL", "Inference error", e)
+            resultTextView.text = "Error during scan: ${e.message}"
         }
     }
 
