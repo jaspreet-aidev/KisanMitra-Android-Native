@@ -7,17 +7,22 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log.d
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
+import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.io.FileInputStream
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import java.util.Locale
+
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -114,61 +119,75 @@ class MainActivity : AppCompatActivity() {
 
     private fun runInference(bitmap: Bitmap) {
         try {
-            val interpreter = interpreter ?: throw Exception("Interpreter not initialized")
+            val interpreter = interpreter ?: throw Exception("AI brain not ready. ")
 
-            // 1. Inspect Model Shapes
-            val inputShape = interpreter.getInputTensor(0).shape() // [1, 224, 224, 3]
-            val outputShape = interpreter.getOutputTensor(0).shape() // [1, 10]
-            val modelImageSize = inputShape[1]
-            val numClasses = outputShape[1]
+            // 1. Get Model requirements
+            val inputTensor = interpreter.getInputTensor(0)
+            val outputTensor = interpreter.getOutputTensor(0)
 
-            android.util.Log.d("AI_MODEL", "Input shape: ${inputShape.contentToString()}")
-            android.util.Log.d("AI_MODEL", "Output shape: ${outputShape.contentToString()}")
+            val modelImageSize = inputTensor.shape()[1] //Usually 224
+            val dataType = inputTensor.dataType()        //Detect Float#@ vs INT8
+            val numClasses = outputTensor.shape()[1]  //Detected from your .tflite
 
-            // 2. Prepare ByteBuffer
-            val byteBuffer = ByteBuffer.allocateDirect(4 * modelImageSize * modelImageSize * 3)
+            d("AI_MODEL", "Model Type: $dataType | Size: $modelImageSize")
+
+            // 2. Pre-process Image (Resize & Downsample)
+            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, modelImageSize, modelImageSize, true)
+
+            // 3. Prepare Buffer (Calculate size based on Datatype)
+            // Float32 = 4 bytes per channel | INT8 = 1 byte per channel
+            val bytesPerChannel = if (dataType == DataType.FLOAT32) 4 else 1
+            val byteBuffer = ByteBuffer.allocateDirect(bytesPerChannel * modelImageSize * modelImageSize * 3)
             byteBuffer.order(ByteOrder.nativeOrder())
 
-            val resizedBitmap = if (bitmap.width != modelImageSize || bitmap.height != modelImageSize) {
-                Bitmap.createScaledBitmap(bitmap, modelImageSize, modelImageSize, true)
-            } else {
-                bitmap
-            }
-
             val intValues = IntArray(modelImageSize * modelImageSize)
-            resizedBitmap.getPixels(intValues, 0, resizedBitmap.width, 0, 0, resizedBitmap.width, resizedBitmap.height)
+            resizedBitmap.getPixels(intValues, 0 ,modelImageSize, 0, 0, modelImageSize, modelImageSize)
 
-            for (pixelValue in intValues) {
-                byteBuffer.putFloat(((pixelValue shr 16) and 0xFF) / 255.0f)
-                byteBuffer.putFloat(((pixelValue shr 8) and 0xFF) / 255.0f)
-                byteBuffer.putFloat((pixelValue and 0xFF) / 255.0f)
+            //4. Pixel-to-Tensor Conversion
+            byteBuffer.rewind()
+            for (pixel in intValues) {
+                val r = (pixel shr 16 and 0xFF)
+                val g = (pixel shr 8 and 0xFF)
+                val b = (pixel and 0xFF)
+
+                if (dataType == DataType.FLOAT32) {
+                    //Normalize to 0.0 - 1.0 for  Float models
+                    byteBuffer.putFloat(r / 255.0f)
+                    byteBuffer.putFloat(g / 255.0F)
+                    byteBuffer.putFloat(b / 255.0f)
+                }
+                else {
+                    // Use raw bytes for Quantized models
+                    byteBuffer.put(r.toByte())
+                    byteBuffer.put(g.toByte())
+                    byteBuffer.put(b.toByte())
+                }
             }
 
-            // 3. Define output buffer dynamically
+            //5. Run Model
             val output = Array(1) { FloatArray(numClasses) }
-
-            // 4. Run Model
             interpreter.run(byteBuffer, output)
 
-            // 5. Display result
+            //6. Memory Cleanup ( Crtical for #Gb RAM devices )
+            if (resizedBitmap != bitmap) resizedBitmap.recycle()
+            // Aggresive GC hint
+            System.gc()
+
+            // 7. UI Update
             val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: -1
             val confidence = if (maxIndex != -1) output[0][maxIndex] else 0f
-
-            if (maxIndex != -1) {
-                if (maxIndex < labels.size) {
-                    val diagnosis = labels[maxIndex]
-                    resultTextView.text = "Result: $diagnosis\nConfidence: ${String.format("%.2f", confidence * 100)}%"
-                } else {
-                    resultTextView.text = "Result Index: $maxIndex\nConfidence: ${String.format("%.2f", confidence * 100)}%\n(Note: Label missing for index $maxIndex)"
-                }
-            } else {
-                resultTextView.text = "Detection failed: No valid prediction."
+            if (maxIndex != -1 && maxIndex < labels.size) {
+                val diagnosis = labels[maxIndex]
+                resultTextView.text = String.format(Locale.US, "Results: %s\nConfidence: %.2f%%", diagnosis, confidence * 100)
+            }
+            else {
+                resultTextView.text = "Diagnosis Failed: Mode; index out of bounds."
             }
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-            android.util.Log.e("AI_MODEL", "Inference error", e)
-            resultTextView.text = "Error during scan: ${e.message}"
+        }
+        catch (e: Exception) {
+            android.util.Log.e("AI_MODEL", "Crash caught: ${e.message}")
+            resultTextView.text = "Error: ${e.message}"
         }
     }
 

@@ -57,7 +57,7 @@
     <TextView
         android:id="@+id/tvResult"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="126dp"
         android:layout_weight="1.4"
         android:background="#F5F5F5"
         android:gravity="center"
