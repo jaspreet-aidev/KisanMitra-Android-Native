@@ -33,6 +33,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnCamera: Button
     private var selectedBitmap: Bitmap? = null
 
+    private val CONFIDENCE_THRESHOLD = 0.70f
+
     private val imageSize = 224
     private var interpreter: Interpreter? = null
 
@@ -202,8 +204,20 @@ class MainActivity : AppCompatActivity() {
 
             // 7. UI Update
             if (maxIndex != -1 && maxIndex < labels.size) {
-                val diagnosis = labels[maxIndex]
-                resultTextView.text = String.format(Locale.US, "Results: %s\nConfidence: %.2f%%", diagnosis, confidence * 100)
+                //ONLY show diagnosis if the AI is sure (above 70%)
+                if (confidence < CONFIDENCE_THRESHOLD) {
+                    val diagnosis = labels[maxIndex]
+                    resultTextView.text = String.format(
+                        Locale.US,
+                        "Results: %s\nConfidence: %.2f%%",
+                        diagnosis,
+                        confidence * 100
+                    )
+                }
+                else {
+                    // if confidence is low , tell the user the imge is unclear
+                    resultTextView.text = String.format(Locale.US, "Unclear Image (%.2f%%)\nPlease scan a clear RIceLeaf.", confidence*100)
+                }
             }
             else {
                 resultTextView.text = "Diagnosis Failed: Mode; index out of bounds."
