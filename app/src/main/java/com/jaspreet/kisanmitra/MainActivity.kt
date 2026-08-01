@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
             val modelImageSize = inputTensor.shape()[1] //Usually 224
             val dataType = inputTensor.dataType()        //Detect Float#@ vs INT8
             val numClasses = outputTensor.shape()[1]  //Detected from your .tflite
-
+            val outputDataType = outputTensor.dataType()
             d("AI_MODEL", "Model Type: $dataType | Size: $modelImageSize")
 
             // 2. Pre-process Image (Resize & Downsample)
@@ -164,9 +164,36 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            //5. Run Model
-            val output = Array(1) { FloatArray(numClasses) }
-            interpreter.run(byteBuffer, output)
+            //5. Run Modelwith Dynamic Output Buffer
+            var maxIndex = -1
+            var confidence = 0.0f
+
+            if ( outputDataType == DataType.INT8) {
+                //Quantized Model Path
+                val output = Array(1) { ByteArray(numClasses) }
+                interpreter.run(byteBuffer, output)
+
+                //Find max index in bytes (higher value = hihger probability)
+                var maxVal = -129
+                for (i in 0 until numClasses) {
+                    if (output[0][i] > maxVal) {
+                        maxVal = output[0][i].toInt()
+                        maxIndex = i
+                    }
+                }
+                //for quantized models , confidence is harder to show without scale/zero point,
+                //but we can show the raw probability relative to the range
+                confidence = (maxVal + 128 ) / 255.0f
+            }
+            else {
+                //Float Model Path
+                val output = Array(1) { FloatArray(numClasses) }
+                interpreter.run(byteBuffer, output)
+
+                maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: -1
+                confidence = if (maxIndex != -1) output[0][maxIndex] else 0f
+            }
+
 
             //6. Memory Cleanup ( Crtical for #Gb RAM devices )
             if (resizedBitmap != bitmap) resizedBitmap.recycle()
@@ -174,8 +201,6 @@ class MainActivity : AppCompatActivity() {
             System.gc()
 
             // 7. UI Update
-            val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: -1
-            val confidence = if (maxIndex != -1) output[0][maxIndex] else 0f
             if (maxIndex != -1 && maxIndex < labels.size) {
                 val diagnosis = labels[maxIndex]
                 resultTextView.text = String.format(Locale.US, "Results: %s\nConfidence: %.2f%%", diagnosis, confidence * 100)
@@ -186,7 +211,7 @@ class MainActivity : AppCompatActivity() {
 
         }
         catch (e: Exception) {
-            android.util.Log.e("AI_MODEL", "Crash caught: ${e.message}")
+            android.util.Log.e("AI_MODEL", "Inference error", e)
             resultTextView.text = "Error: ${e.message}"
         }
     }

@@ -7,10 +7,6 @@ android {
     namespace = "com.jaspreet.kisanmitra"
     compileSdk = 34
 
-    aaptOptions {
-        noCompress("tflite")
-    }
-
     defaultConfig {
         applicationId = "com.jaspreet.kisanmitra"
         minSdk = 26
@@ -34,6 +30,9 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
+    }
+    androidResources {
+        noCompress += listOf("tflite")
     }
 }
 
