@@ -39,5 +39,3 @@ To bypass the memory throttle of Android WebViews, this build separates the UI f
 
 ---
 *Developed for Project Crop-Guard. UI/UX design collaboration in progress.*
-*hyy i am jaspreet my name is jaspreet how are u doing its me the very best man u see i insoired fron akec=xn=enderrrrrrrrr i play the orchestra so yes i see stevejbs in ehich he said he play orchestar thats very  influetioal linebecause i dont want be an any ither cider ir like any specific man i want to run  make compaiestuji8htyyugtfrde3ghdj yes i am the hera  gothu to get 
-# so today 1 aug I am going to downoad new uograde to new version of 8.4.0 like now its syncing all files its taking very musch tiing
