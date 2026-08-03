@@ -166,3 +166,50 @@ Task 4: Managed local workspace file resolution dependencies to fix asset manage
 System Status: Stable
 Target Hardware Validation: Moto G85 & 3GB RAM Constrained Devices (Passed)
 ===================================================================
+
+LOG NODE: UI-ID-SYNC-003 | DATE: 2026-07-30
+--------------------------------------------------------------------------------
+[BUG DEPLOYED] #UI-REF-001: Resource ID Desynchronization (XML Upgrade Trap)
+1. PRIOR RUNTIME STATE:
+   - Layout `activity_main.xml` upgraded to modern design parameters.
+   - `MainActivity.kt` failed to compile due to stale reference pointers.
+2. DIAGNOSIS:
+   - XML identifiers were renamed during the upgrade, causing "Unresolved Reference" 
+     errors for `leafImageView`, `scanButton`, and `resultTextView`.
+   - `AndroidManifest.xml` contained malformed duplicate tags, blocking the build.
+3. IMPLEMENTATION Deployed:
+   - Synchronized `findViewById` mapping logic to match new resource identifiers.
+   - Purged redundant XML attributes and restored Manifest structural integrity.
+4. STATUS: Resolved. Build parity and UI visibility restored.
+
+LOG NODE: INF-INT8-FIX-004 | DATE: 2026-08-01
+--------------------------------------------------------------------------------
+[BUG DEPLOYED] #TENSOR-TYPE-002: INT8 Quantization Buffer Mismatch
+1. PRIOR RUNTIME STATE:
+   - Application crashed with `IllegalArgumentException` during model activation.
+   - Error trace: "Cannot convert between INT8 and Java object type [[F".
+2. DIAGNOSIS:
+   - The new `New_81_model.tflite` uses 8-bit Integer (INT8) Quantization.
+   - Logic attempted to pour 1-byte INT8 tensors into 4-byte `FloatArray` buffers, 
+     triggering a fatal JVM buffer length mismatch.
+3. IMPLEMENTATION Deployed:
+   - Engineered a "Dynamic Tensor Sensing" pipeline to detect model DataType 
+     (Float32 vs. INT8) at runtime.
+   - Implemented `ByteArray` output buffers and dequantization scaling logic to 
+     map signed-byte probabilities back to agricultural certainty metrics.
+4. STATUS: Resolved. Cross-architecture model compatibility achieved.
+
+LOG NODE: OOD-GUARD-005 | DATE: 2026-08-01
+--------------------------------------------------------------------------------
+[FEAT DEPLOYED] #CONF-FILTER-001: Out-of-Distribution (OOD) Confidence Guard
+1. PRIOR RUNTIME STATE:
+   - Model correctly classified rice paddy, but attempted to force random objects 
+     (faces, pens) into rice disease categories with low certainty.
+2. DIAGNOSIS:
+   - Lack of a "Background" class or threshold logic allowed the AI to display 
+     its "least wrong" guess as a confirmed diagnosis.
+3. IMPLEMENTATION Deployed:
+   - Established a hardcoded `CONFIDENCE_THRESHOLD = 0.70f` (70%) security filter.
+   - Intercepted the inference loop to trigger a "Unclear Image" warning for 
+     any classification falling below the 70% certainty ceiling.
+4. STATUS: Resolved. Diagnostic reliability secured for rural deployment.
