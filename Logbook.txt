@@ -213,3 +213,27 @@ LOG NODE: OOD-GUARD-005 | DATE: 2026-08-01
    - Intercepted the inference loop to trigger a "Unclear Image" warning for 
      any classification falling below the 70% certainty ceiling.
 4. STATUS: Resolved. Diagnostic reliability secured for rural deployment.
+
+
+LOG NODE: UI-UX-001 | DATE: 2026-08-04
+--------------------------------------------------------------------------------
+[FEAT DEPLOYED] #INTRO-ONBOARDING: Interactive Onboarding & Logic Recalibration
+1. PRIOR RUNTIME STATE:
+   - Application launched directly into the hardware camera interface.
+   - Inference results were intermittently rejecting valid inputs due to a 
+     logic inversion bug in the confidence threshold filter.
+2. DIAGNOSIS:
+   - User feedback indicated a need for a "Trust-Bridge" to explain the 
+     offline-first security model to farmers.
+   - Tracing `MainActivity.kt` revealed that diagnoses were accidentally 
+     triggered for *low* confidence scores rather than *high* ones.
+3. IMPLEMENTATION Deployed:
+   - Engineered `OnboardingActivity`: A high-contrast introductory layout 
+     explaining privacy, safety, and offline functionality.
+   - Remapped the `AndroidManifest.xml` intent-filter to route cold boots 
+     through the onboarding gate first.
+   - Fixed the "Safety-Gate" logic inversion: Corrected the comparator to 
+     `if (confidence >= CONFIDENCE_THRESHOLD)`.
+4. STATUS: Resolved. User interaction flow modernized; inference logic validated.
+
+
