@@ -204,23 +204,30 @@ class MainActivity : AppCompatActivity() {
 
             // 7. UI Update
             if (maxIndex != -1 && maxIndex < labels.size) {
-                //ONLY show diagnosis if the AI is sure (above 70%)
-                if (confidence < CONFIDENCE_THRESHOLD) {
+                // LOG the result for calibration
+                android.util.Log.d("AI_MODEL", "Winning Index: $maxIndex, Confidence: ${confidence * 100}%")
+
+                // ONLY show diagnosis if the AI is sure (above 70%)
+                if (confidence >= CONFIDENCE_THRESHOLD) {
                     val diagnosis = labels[maxIndex]
                     resultTextView.text = String.format(
                         Locale.US,
-                        "Results: %s\nConfidence: %.2f%%",
+                        "Result: %s\nConfidence: %.2f%%",
                         diagnosis,
                         confidence * 100
                     )
                 }
                 else {
-                    // if confidence is low , tell the user the imge is unclear
-                    resultTextView.text = String.format(Locale.US, "Unclear Image (%.2f%%)\nPlease scan a clear RIceLeaf.", confidence*100)
+                    // if confidence is low , tell the user the image is unclear
+                    resultTextView.text = String.format(
+                        Locale.US, 
+                        "Unclear Image (%.2f%%)\nPlease scan a clear Rice Leaf.", 
+                        confidence * 100
+                    )
                 }
             }
             else {
-                resultTextView.text = "Diagnosis Failed: Mode; index out of bounds."
+                resultTextView.text = "Diagnosis Failed: Model index out of bounds."
             }
 
         }

@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Kisan Mitra</string>
+    <string name="welcome_title">Welcome to Kisan Mitra</string>
+    <string name="welcome_subtitle">Your Rice Crop Doctor</string>
+    <string name="app_description">Instantly identify rice leaf diseases using AI. Works 100% offline in your field.</string>
+    <string name="safety_note">🔒 100% Private &amp; Safe\nYour data never leaves this phone.</string>
+    <string name="btn_get_started">GET STARTED</string>
 </resources>
