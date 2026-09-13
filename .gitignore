@@ -7,13 +7,18 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/shelf/
 .DS_Store
+Thumbs.db
 /build
 /captures
 .externalNativeBuild
 .cxx
 *.apk
+*.aab
+*.dex
+*.ap_
 *.jks
+*.keystore
 .kotlin/
 capture.jpg
-git add .
