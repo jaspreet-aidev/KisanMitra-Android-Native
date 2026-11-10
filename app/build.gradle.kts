@@ -50,6 +50,13 @@ dependencies {
     // TensorFlow Lite / Edge AI Brain
     implementation("com.google.ai.edge.litert:litert:1.0.1")
     implementation("com.google.ai.edge.litert:litert-support:1.0.1")
-    // implementation("org.tensorflow:tensorflow-lite:2.14.0")
-    // implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.4")
+
+    // Networking: Retrofit & OkHttp (for Pl@ntNet API fallback)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    
+    // Coroutine Lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 }
